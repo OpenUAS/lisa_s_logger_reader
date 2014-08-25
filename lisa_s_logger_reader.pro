@@ -13,8 +13,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    qpushbuttonprogress.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    qpushbuttonprogress.h
 
 FORMS    += mainwindow.ui

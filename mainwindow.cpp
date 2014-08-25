@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->setupUi(this);
 
   serial = new QSerialPort(this);
-  serial->setPortName("/dev/ttyACM1");
+  serial->setPortName("/dev/ttyUSB0");  //ttyACM1
   serial->setBaudRate(115200);    //115200/230400/921600
   serial->setDataBits(QSerialPort::Data8);
   serial->setParity(QSerialPort::NoParity);
@@ -27,6 +27,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 
+  fetch_button = new QPushButtonProgress(this, "Dump memory");
+  //fetch_button->setText("Dump memory");
+  //fetch_button->showProgressBar();
+
+  ui->button_spot->addWidget(fetch_button);
+
+
+  connect(fetch_button, SIGNAL(clicked()), this, SLOT(fetch_memory()));
+
+
 
   model = new QStandardItemModel(2,3,this);
   ui->table->setModel(model);
@@ -36,6 +46,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
   connect(serial, SIGNAL(readyRead()), this, SLOT(readData()));
+
+
+
+  newDataRead = 0;
+
+  timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(updateData()));
+  timer->start(1000);
 }
 
 MainWindow::~MainWindow()
@@ -47,23 +65,45 @@ void MainWindow::readData()
 {
   data.append(serial->readAll());
 
-  ui->data->setText(QString(data.toHex()));
+  //ui->data->setText(QString(data.toHex()));
 
-  update_table();
+  //update_table();
 
   ui->lcdNumber->display(data.size());
+
+  fetch_button->setProgress(data.size()*100/33554432);    //33554432
+
+  newDataRead = 1;
+
+  timer->start(); //act as a restart on the timer
 }
 
 
 
+void MainWindow::updateData(){
 
-void MainWindow::on_pushButton_clicked()
+  if(newDataRead){
+
+    ui->data->setText(QString(data.toHex()));
+
+    update_table();
+  }
+
+  newDataRead = 0;
+  fetch_button->hideProgressBar();
+}
+
+
+
+void MainWindow::fetch_memory()
 {
   QByteArray data = "A";
   serial->putChar('A');
 
   ui->data->clear();
   this->data.clear();
+
+  fetch_button->showProgressBar();
 }
 
 
