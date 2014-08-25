@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
   serial = new QSerialPort(this);
   serial->setPortName("/dev/ttyACM1");
-  serial->setBaudRate(115200);
+  serial->setBaudRate(115200);    //115200/230400/921600
   serial->setDataBits(QSerialPort::Data8);
   serial->setParity(QSerialPort::NoParity);
   serial->setStopBits(QSerialPort::OneStop);
@@ -100,10 +100,11 @@ void MainWindow::update_table()
 
   //decode the values
   end_of_log = data.indexOf(QByteArray(stop_log_sequence, 6));
+  if(end_of_log < 0) return;
 
   QByteArray values = data.mid(start_of_values+3, end_of_log-(start_of_values+3));
 
-  for(int i=0; i< (values.size()/nbr_messages); i++){ //for each pack of values (each row of the table)
+  for(int i=0; i< (values.size()/(nbr_messages*DATA_SIZE)); i++){ //for each pack of values (each row of the table)
 
     QByteArray subValues = values.mid(i*DATA_SIZE*nbr_messages, nbr_messages*DATA_SIZE);
     QList<QStandardItem *> items;
@@ -123,12 +124,59 @@ void MainWindow::update_table()
 
         QStandardItem *item = new QStandardItem(QString::number(currentDoubleValue));
         items.append(item);
-
     }
 
     model->appendRow(items);
   }
+
+  ui->lcd_lines->display(model->rowCount());
 }
+
+
+
+void MainWindow::on_export_button_clicked()
+{
+  QString filename = QFileDialog::getSaveFileName(this, "Export data", "", "*.csv");
+  if (!filename.endsWith(".csv", Qt::CaseInsensitive) ) filename += ".csv";
+
+  QFile f(filename);
+  f.open( QIODevice::WriteOnly );
+  QTextStream file(&f);
+
+
+  for(int i=0; i<model->columnCount(); i++){
+
+    file << model->horizontalHeaderItem(i)->text().toLatin1() << ";";
+  }
+
+  file << "\n\r";
+
+  for(int i=0; i<model->rowCount(); i++){
+
+    for(int j=0; j<model->columnCount(); j++){
+
+      file << model->item(i, j)->text().toLatin1() << ";";
+    }
+
+    file << "\n\r";
+  }
+
+  f.close();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

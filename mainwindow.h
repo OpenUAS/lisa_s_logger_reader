@@ -7,7 +7,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QStandardItemModel>
-
+#include <QFileDialog>
 
 
 namespace Ui {
@@ -35,6 +35,7 @@ private slots:
   void readData();
   void on_pushButton_clicked();
   void update_table();
+  void on_export_button_clicked();
 };
 
 #endif // MAINWINDOW_H

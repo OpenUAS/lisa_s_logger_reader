@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>492</height>
+    <height>691</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,7 +33,28 @@
      <widget class="QTextBrowser" name="data"/>
     </item>
     <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QLCDNumber" name="lcd_lines"/>
+      </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>lines</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="QTableView" name="table"/>
+    </item>
+    <item>
+     <widget class="QPushButton" name="export_button">
+      <property name="text">
+       <string>Export</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
