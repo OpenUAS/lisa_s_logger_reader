@@ -28,11 +28,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
   fetch_button = new QPushButtonProgress(this, "Dump memory");
-  //fetch_button->setText("Dump memory");
-  //fetch_button->showProgressBar();
 
   ui->button_spot->addWidget(fetch_button);
-
 
   connect(fetch_button, SIGNAL(clicked()), this, SLOT(fetch_memory()));
 
@@ -54,6 +51,21 @@ MainWindow::MainWindow(QWidget *parent) :
   timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(updateData()));
   timer->start(1000);
+
+  QTimer *timer2 = new QTimer(this);
+  connect(timer2, SIGNAL(timeout()), this, SLOT(updateRaw()));
+  timer2->start(1000);
+
+
+
+  decodeProgressBar = new QProgressBar();
+  decodeData = new QLabel();
+  decodeData->setText("Decoded data");
+
+  ui->horizontalLayoutDecodeProgress->addWidget(decodeData);
+  ui->horizontalLayoutDecodeProgress->addWidget(decodeProgressBar);
+  decodeProgressBar->hide();
+
 }
 
 MainWindow::~MainWindow()
@@ -65,17 +77,19 @@ void MainWindow::readData()
 {
   data.append(serial->readAll());
 
-  //ui->data->setText(QString(data.toHex()));
+  newDataRead = 1;
 
-  //update_table();
+  serial->putChar('B');
+
+  timer->start(); //act as a restart on the timer
+}
+
+
+void MainWindow::updateRaw(){
 
   ui->lcdNumber->display(data.size());
 
-  fetch_button->setProgress(data.size()*100/33554432);    //33554432
-
-  newDataRead = 1;
-
-  timer->start(); //act as a restart on the timer
+  fetch_button->setProgress(data.size()*100/33554432);    //33554432 = 32MB, the total size of the memory
 }
 
 
@@ -85,7 +99,6 @@ void MainWindow::updateData(){
   if(newDataRead){
 
     ui->data->setText(QString(data.toHex()));
-
     update_table();
   }
 
@@ -97,7 +110,6 @@ void MainWindow::updateData(){
 
 void MainWindow::fetch_memory()
 {
-  QByteArray data = "A";
   serial->putChar('A');
 
   ui->data->clear();
@@ -142,6 +154,12 @@ void MainWindow::update_table()
   end_of_log = data.indexOf(QByteArray(stop_log_sequence, 6));
   if(end_of_log < 0) return;
 
+
+  decodeProgressBar->show();
+  decodeProgressBar->setValue(0);
+  qApp->processEvents();    //we force qt to process the events to display the progress bar
+
+
   QByteArray values = data.mid(start_of_values+3, end_of_log-(start_of_values+3));
 
   for(int i=0; i< (values.size()/(nbr_messages*DATA_SIZE)); i++){ //for each pack of values (each row of the table)
@@ -167,9 +185,18 @@ void MainWindow::update_table()
     }
 
     model->appendRow(items);
+
+    int progress = (i*100)/(values.size()/(nbr_messages*DATA_SIZE));
+    if(progress != decodeProgressBar->value()){
+
+      ui->lcd_lines->display(model->rowCount());
+      decodeProgressBar->setValue(i*100/(values.size()/(nbr_messages*DATA_SIZE)));
+      qApp->processEvents();    //we force qt to process the events to display the progress bar
+    }
   }
 
   ui->lcd_lines->display(model->rowCount());
+  decodeProgressBar->hide();
 }
 
 

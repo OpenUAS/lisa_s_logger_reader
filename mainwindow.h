@@ -9,6 +9,9 @@
 #include <QStandardItemModel>
 #include <QFileDialog>
 #include <QTimer>
+#include <QProgressBar>
+#include <QLabel>
+#include <QApplication>
 
 #include "qpushbuttonprogress.h"
 
@@ -35,6 +38,9 @@ private:
   int newDataRead;
   QTimer *timer;
 
+  QProgressBar *decodeProgressBar;
+  QLabel *decodeData;
+
 private slots:
 
   void readData();
@@ -42,6 +48,7 @@ private slots:
   void update_table();
   void on_export_button_clicked();
   void updateData();
+  void updateRaw();
 };
 
 #endif // MAINWINDOW_H
