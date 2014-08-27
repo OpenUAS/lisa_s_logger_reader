@@ -12,39 +12,14 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->setupUi(this);
 
   serial = new QSerialPort(this);
-  /*serial->setPortName("/dev/ttyUSB0");  //ttyACM1
-  serial->setBaudRate(115200);    //115200/230400/921600
-  serial->setDataBits(QSerialPort::Data8);
-  serial->setParity(QSerialPort::NoParity);
-  serial->setStopBits(QSerialPort::OneStop);
-  serial->setFlowControl(QSerialPort::NoFlowControl);
-
-  if(!serial->open(QIODevice::ReadWrite)){
-
-      qDebug("error when opening the serial port");
-      QMessageBox::critical(this, tr("Error"), serial->errorString());
-  }*/
-
-
-
-  fetch_button = new QPushButtonProgress(this, "Dump memory");
-
-  ui->button_spot->addWidget(fetch_button);
-
-  connect(fetch_button, SIGNAL(clicked()), this, SLOT(fetch_memory()));
-
-
-
-  model = new QStandardItemModel(2,3,this);
-  ui->table->setModel(model);
-
-
-
-
-
   connect(serial, SIGNAL(readyRead()), this, SLOT(readData()));
 
+  fetch_button = new QPushButtonProgress(this, "Dump memory");
+  ui->button_spot->addWidget(fetch_button);
+  connect(fetch_button, SIGNAL(clicked()), this, SLOT(fetch_memory()));
 
+  model = new QStandardItemModel(0,0,this);
+  ui->table->setModel(model);
 
   newDataRead = 0;
 
@@ -56,31 +31,20 @@ MainWindow::MainWindow(QWidget *parent) :
   connect(timer2, SIGNAL(timeout()), this, SLOT(updateRaw()));
   timer2->start(1000);
 
-
-
   decodeProgressBar = new QProgressBar();
   decodeData = new QLabel();
   decodeData->setText("Decoded data");
-
   ui->horizontalLayoutDecodeProgress->addWidget(decodeData);
   ui->horizontalLayoutDecodeProgress->addWidget(decodeProgressBar);
   decodeProgressBar->hide();
 
 
-
-
   serialPortList = new QComboBox(this);
-
   listAvailablePorts = QSerialPortInfo::availablePorts();
   serialPortList->addItem("");
-  for(int i=0; i<listAvailablePorts.size(); i++){
-
-    serialPortList->addItem(listAvailablePorts.at(i).portName());
-  }
-
+  for(int i=0; i<listAvailablePorts.size(); i++) serialPortList->addItem(listAvailablePorts.at(i).portName());
   serialPortList->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
   ui->button_spot->addWidget(serialPortList);
-
   connect(serialPortList, SIGNAL(currentIndexChanged(int)), this, SLOT(configureSerialConnexion()));
 }
 
