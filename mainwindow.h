@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 #include <QSerialPort>
+#include <QSerialPortInfo>
 #include <QDebug>
 #include <QMessageBox>
 #include <QStandardItemModel>
@@ -12,6 +13,7 @@
 #include <QProgressBar>
 #include <QLabel>
 #include <QApplication>
+#include <QComboBox>
 
 #include "qpushbuttonprogress.h"
 
@@ -40,6 +42,8 @@ private:
 
   QProgressBar *decodeProgressBar;
   QLabel *decodeData;
+  QComboBox *serialPortList;
+  QList<QSerialPortInfo> listAvailablePorts;
 
 private slots:
 
@@ -49,6 +53,10 @@ private slots:
   void on_export_button_clicked();
   void updateData();
   void updateRaw();
+  void on_actionDump_memory_triggered();
+  void on_actionClear_interface_triggered();
+  void on_actionExport_data_triggered();
+  void configureSerialConnexion();
 };
 
 #endif // MAINWINDOW_H

@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->setupUi(this);
 
   serial = new QSerialPort(this);
-  serial->setPortName("/dev/ttyUSB0");  //ttyACM1
+  /*serial->setPortName("/dev/ttyUSB0");  //ttyACM1
   serial->setBaudRate(115200);    //115200/230400/921600
   serial->setDataBits(QSerialPort::Data8);
   serial->setParity(QSerialPort::NoParity);
@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
       qDebug("error when opening the serial port");
       QMessageBox::critical(this, tr("Error"), serial->errorString());
-  }
+  }*/
 
 
 
@@ -66,11 +66,53 @@ MainWindow::MainWindow(QWidget *parent) :
   ui->horizontalLayoutDecodeProgress->addWidget(decodeProgressBar);
   decodeProgressBar->hide();
 
+
+
+
+  serialPortList = new QComboBox(this);
+
+  listAvailablePorts = QSerialPortInfo::availablePorts();
+  serialPortList->addItem("");
+  for(int i=0; i<listAvailablePorts.size(); i++){
+
+    serialPortList->addItem(listAvailablePorts.at(i).portName());
+  }
+
+  serialPortList->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+  ui->button_spot->addWidget(serialPortList);
+
+  connect(serialPortList, SIGNAL(currentIndexChanged(int)), this, SLOT(configureSerialConnexion()));
 }
 
 MainWindow::~MainWindow()
 {
   delete ui;
+}
+
+
+
+void MainWindow::configureSerialConnexion(){
+
+  serial->close();
+
+  int currentIndex = serialPortList->currentIndex();
+  if(currentIndex < 1){ //if we selected the blank value we quit
+
+      return;
+  }
+
+  serial->setPort(listAvailablePorts.at(currentIndex-1)); //-1 cause of the first blank value in the list
+  serial->setBaudRate(115200);    //115200/230400/921600
+  serial->setDataBits(QSerialPort::Data8);
+  serial->setParity(QSerialPort::NoParity);
+  serial->setStopBits(QSerialPort::OneStop);
+  serial->setFlowControl(QSerialPort::NoFlowControl);
+
+  if(!serial->open(QIODevice::ReadWrite)){
+
+      qDebug("error when opening the serial port");
+      QMessageBox::critical(this, tr("Error"), serial->errorString());
+  }
 }
 
 void MainWindow::readData()
@@ -79,7 +121,11 @@ void MainWindow::readData()
 
   newDataRead = 1;
 
-  serial->putChar('B');
+  if(!serial->putChar('B')){
+
+      qDebug("error when sending over the serial port");
+      QMessageBox::critical(this, tr("Error"), serial->errorString());
+  }
 
   timer->start(); //act as a restart on the timer
 }
@@ -110,7 +156,12 @@ void MainWindow::updateData(){
 
 void MainWindow::fetch_memory()
 {
-  serial->putChar('A');
+
+  if(!serial->putChar('A')){
+
+      qDebug("error when sending over the serial port");
+      QMessageBox::critical(this, tr("Error"), serial->errorString());
+  }
 
   ui->data->clear();
   this->data.clear();
@@ -204,10 +255,15 @@ void MainWindow::update_table()
 void MainWindow::on_export_button_clicked()
 {
   QString filename = QFileDialog::getSaveFileName(this, "Export data", "", "*.csv");
+  if(filename.isEmpty()) return;
   if (!filename.endsWith(".csv", Qt::CaseInsensitive) ) filename += ".csv";
 
   QFile f(filename);
-  f.open( QIODevice::WriteOnly );
+  if(!f.open(QIODevice::WriteOnly)){
+
+      //error when opening the file
+      return;
+  }
   QTextStream file(&f);
 
 
@@ -232,20 +288,25 @@ void MainWindow::on_export_button_clicked()
 }
 
 
+void MainWindow::on_actionDump_memory_triggered()
+{
+  fetch_memory();
+}
 
 
+void MainWindow::on_actionClear_interface_triggered()
+{
+  data.clear();
+  ui->lcdNumber->display(0);
+  ui->data->setText("");
+  ui->lcd_lines->display(0);
+  model->clear();
+}
 
-
-
-
-
-
-
-
-
-
-
-
+void MainWindow::on_actionExport_data_triggered()
+{
+  on_export_button_clicked();
+}
 
 
 
