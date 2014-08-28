@@ -156,9 +156,7 @@ void MainWindow::update_table()
 
   unsigned char data_size = data.mid(start_of_log+6, 1).at(0);
 
-
-
-  messages_names = data.mid(start_of_log+7, start_of_values-6).split(';');    //DAFUK size ???
+  messages_names = data.mid(start_of_log+7, start_of_values-7).split(';');
   nbr_messages = messages_names.size();
 
 
