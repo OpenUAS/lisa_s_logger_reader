@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 
-#define DATA_SIZE 2
+//#define DATA_SIZE 2
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -154,7 +154,11 @@ void MainWindow::update_table()
   start_of_log = data.indexOf(QByteArray(start_log_sequence, 6));
   start_of_values = data.indexOf(QByteArray(start_values_sequence, 3));
 
-  messages_names = data.mid(start_of_log+6, start_of_values-6).split(';');
+  unsigned char data_size = data.mid(start_of_log+6, 1).at(0);
+
+
+
+  messages_names = data.mid(start_of_log+7, start_of_values-6).split(';');    //DAFUK size ???
   nbr_messages = messages_names.size();
 
 
@@ -181,7 +185,7 @@ void MainWindow::update_table()
     stop = data.indexOf(QByteArray(stop_lost_values_sequence, 6));
 
 
-    for(int k=0; k<DATA_SIZE; k++){
+    for(int k=0; k<data_size; k++){
 
       nbr_lost += (static_cast<quint8>(data.mid(start+6, 4).at(k)))<<(8*k);   //we get 32bits value every times
     }
@@ -213,28 +217,28 @@ void MainWindow::update_table()
 
   QByteArray values = data.mid(start_of_values+3, end_of_log-(start_of_values+3));
 
-  for(int i=0; i< (values.size()/(nbr_messages*DATA_SIZE)); i++){ //for each pack of values (each row of the table)
+  for(int i=0; i< (values.size()/(nbr_messages*data_size)); i++){ //for each pack of values (each row of the table)
 
-    QByteArray subValues = values.mid(i*DATA_SIZE*nbr_messages, nbr_messages*DATA_SIZE);
+    QByteArray subValues = values.mid(i*data_size*nbr_messages, nbr_messages*data_size);
     QList<QStandardItem *> items;
 
     for(int j=0; j<nbr_messages; j++){  //for each messages
 
-        QByteArray currentValue = subValues.mid(j*DATA_SIZE, DATA_SIZE);
+        QByteArray currentValue = subValues.mid(j*data_size, data_size);
         long currentLongValue = 0;
 
-        if(currentValue.size() < DATA_SIZE) break;
+        if(currentValue.size() < data_size) break;
 
-        for(int k=0; k<DATA_SIZE; k++){
+        for(int k=0; k<data_size; k++){
 
           currentLongValue += static_cast<quint8>(currentValue.at(k))<<(8*k);
         }
 
-        long lastBit = currentLongValue & (0x01<<((8*DATA_SIZE)-1));
+        long lastBit = currentLongValue & (0x01<<((8*data_size)-1));
 
         if(lastBit){  //if lastBit != 0 : we need to add ones to the begining of currentLongValue
 
-          for(int k=DATA_SIZE; k<4; k++){ //fill with the last bit the remaining of the long
+          for(int k=data_size; k<4; k++){ //fill with the last bit the remaining of the long
 
             currentLongValue = currentLongValue | (0xFF<<(8*k));
           }
@@ -247,11 +251,11 @@ void MainWindow::update_table()
 
     model->appendRow(items);
 
-    int progress = (i*100)/(values.size()/(nbr_messages*DATA_SIZE));
+    int progress = (i*100)/(values.size()/(nbr_messages*data_size));
     if(progress != decodeProgressBar->value()){
 
       ui->lcd_lines->display(model->rowCount());
-      decodeProgressBar->setValue(i*100/(values.size()/(nbr_messages*DATA_SIZE)));
+      decodeProgressBar->setValue(i*100/(values.size()/(nbr_messages*data_size)));
       qApp->processEvents();    //we force qt to process the events to display the progress bar
     }
   }
