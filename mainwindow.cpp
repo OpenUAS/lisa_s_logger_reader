@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 
-#define DATA_SIZE 4
+#define DATA_SIZE 2
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -183,7 +183,7 @@ void MainWindow::update_table()
 
     for(int k=0; k<DATA_SIZE; k++){
 
-      nbr_lost += (static_cast<quint8>(data.mid(start+6, 4).at(k)))<<(8*k);
+      nbr_lost += (static_cast<quint8>(data.mid(start+6, 4).at(k)))<<(8*k);   //we get 32bits value every times
     }
 
     QByteArray lost_data_insert;
@@ -221,17 +221,27 @@ void MainWindow::update_table()
     for(int j=0; j<nbr_messages; j++){  //for each messages
 
         QByteArray currentValue = subValues.mid(j*DATA_SIZE, DATA_SIZE);
-        long currentDoubleValue = 0;
+        long currentLongValue = 0;
 
         if(currentValue.size() < DATA_SIZE) break;
 
         for(int k=0; k<DATA_SIZE; k++){
 
-          currentDoubleValue += static_cast<quint8>(currentValue.at(k))<<(8*k);
+          currentLongValue += static_cast<quint8>(currentValue.at(k))<<(8*k);
+        }
+
+        long lastBit = currentLongValue & (0x01<<((8*DATA_SIZE)-1));
+
+        if(lastBit){  //if lastBit != 0 : we need to add ones to the begining of currentLongValue
+
+          for(int k=DATA_SIZE; k<4; k++){ //fill with the last bit the remaining of the long
+
+            currentLongValue = currentLongValue | (0xFF<<(8*k));
+          }
         }
 
 
-        QStandardItem *item = new QStandardItem(QString::number(currentDoubleValue));
+        QStandardItem *item = new QStandardItem(QString::number(currentLongValue));
         items.append(item);
     }
 
