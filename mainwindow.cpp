@@ -139,6 +139,10 @@ void MainWindow::update_table()
 {
   char start_log_sequence[6] = {0xAA, 0x55, 0xFF, 0x00, 0x55, 0xAA};
   char start_values_sequence[3] = {0xF0, 0xF0, 0xA5};
+
+  char start_lost_values_sequence[6] = {0x42, 0x0F, 0X42, 0X00, 0XFF, 0xAA};
+  char stop_lost_values_sequence[6] = {0xAA, 0xFF, 0x00, 0x42, 0x0F, 0x42};
+
   char stop_log_sequence[6] = {0xFF, 0x00, 0x55, 0xAA, 0x00, 0xFF};
   int start_of_log, start_of_values, end_of_log;
   int nbr_messages;
@@ -165,6 +169,38 @@ void MainWindow::update_table()
 
 
 
+
+
+  //fill in the lost values by zeros
+  while(data.contains(start_lost_values_sequence)){
+
+    unsigned long start, stop;
+    long nbr_lost = 0;
+
+    start = data.indexOf(QByteArray(start_lost_values_sequence, 6));
+    stop = data.indexOf(QByteArray(stop_lost_values_sequence, 6));
+
+
+    for(int k=0; k<DATA_SIZE; k++){
+
+      nbr_lost += (static_cast<quint8>(data.mid(start+6, 4).at(k)))<<(8*k);
+    }
+
+    QByteArray lost_data_insert;
+
+    for(int i=0; i<nbr_lost; i++){
+
+      lost_data_insert.append((char) 0x00);
+    }
+
+    data.remove(start, stop-start+6);
+    data.insert(start, lost_data_insert);
+  }
+
+
+
+
+
   //decode the values
   end_of_log = data.indexOf(QByteArray(stop_log_sequence, 6));
   if(end_of_log < 0) return;
@@ -185,13 +221,13 @@ void MainWindow::update_table()
     for(int j=0; j<nbr_messages; j++){  //for each messages
 
         QByteArray currentValue = subValues.mid(j*DATA_SIZE, DATA_SIZE);
-        double currentDoubleValue = 0;
+        long currentDoubleValue = 0;
 
         if(currentValue.size() < DATA_SIZE) break;
 
         for(int k=0; k<DATA_SIZE; k++){
 
-          currentDoubleValue += currentValue.at(k)<<(8*k);
+          currentDoubleValue += static_cast<quint8>(currentValue.at(k))<<(8*k);
         }
 
 
@@ -231,6 +267,8 @@ void MainWindow::on_export_button_clicked()
   QTextStream file(&f);
 
 
+  file << "Time;";
+
   for(int i=0; i<model->columnCount(); i++){
 
     file << model->horizontalHeaderItem(i)->text().toLatin1() << ";";
@@ -239,6 +277,8 @@ void MainWindow::on_export_button_clicked()
   file << "\n\r";
 
   for(int i=0; i<model->rowCount(); i++){
+
+    file << QString::number(i).toLatin1() << ";";
 
     for(int j=0; j<model->columnCount(); j++){
 

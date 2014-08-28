@@ -215,7 +215,7 @@
     <string>Clear interface</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+C</string>
+    <string>Ctrl+R</string>
    </property>
   </action>
   <action name="actionExport_data">
